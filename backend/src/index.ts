@@ -1,4 +1,4 @@
-import express, {Request, Response} from 'express'
+import express, {Request, Response, RequestHandler} from 'express'
 import dotenv from 'dotenv'
 import dataJson from '../src/data.json'
 import idJson from './id.json'
@@ -15,9 +15,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-});
+})
 
-const userSessions: any = {};
+
+interface Category {
+    question: string;
+    choices: {
+        [key: string]: string | Category;
+    };
+}
+
+interface DataJson {
+    categories: {
+        [key: string]: Category;
+    };
+}
 
 interface IdJson {
     "categories ID": {
@@ -28,13 +40,62 @@ interface IdJson {
 }
 
 const typedIdJson: IdJson = idJson as IdJson;
+const typedDataJson: DataJson = dataJson as DataJson;
 
 
-app.post ('/api/start', async (req: Request, res: Response) => {
+interface UserSession {
+    category: string;
+    step: number;
+    answers: { [key: string]: string };
+    currentQuestion?: string;
+    currentChoices?: string[];
+}
+
+const userSessions: { [key: string]: UserSession } = {};
+
+
+
+const startHandler: RequestHandler = (req, res):void => {
     const { userId, categoryId } = req.body;
 
+    if (!userId || !categoryId) {
+        res.status(400).json({ success: false, message: 'Missing userId or categoryId' });
+        return
+    }
+
     const category = typedIdJson["categories ID"].choices[categoryId];
-})
+
+    if (!category) {
+      res.status(400).json({ success: false, message: 'Invalid category ID' });
+      return
+    }
+
+    const categoryData = typedDataJson.categories[category];
+
+    if (!categoryData) {
+        res.status(400).json({ success: false, message: 'Category data not found' });
+        return
+    }
+
+    // Store category in user's session
+    userSessions[userId] = {
+        category: category,
+        step: 1,
+        answers: {},
+        currentQuestion: categoryData.question,
+        currentChoices: Object.keys(categoryData.choices)
+    };
+
+    res.json({
+        success: true,
+        message: `You chose ${category}. Here's the first question:`,
+        question: categoryData.question,
+        choices: Object.keys(categoryData.choices)
+    });
+};
+
+
+app.post('/api/start', startHandler);
 
 
 

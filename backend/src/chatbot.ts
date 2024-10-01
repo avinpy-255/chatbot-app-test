@@ -1,6 +1,6 @@
-const fs = require('fs').promises;
+import fs from 'fs/promises';
 import OpenAI from 'openai';
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -26,6 +26,10 @@ let userData: UserData = { serviceId: '', zip: '' };
 let currentCategory: Category | null = null;
 let currentChoices: Record<string, string | { question: string; choices: Record<string, string> }> | null = null;
 let currentQuestion: string | null = null;
+let conversationHistory: Array<{
+  name: any; role: string; content: string 
+}> = [];
+let conversationState: 'category_selection' | 'service_selection' | 'collecting_details' = 'category_selection';
 
 export async function processUserInput(message: string, categoryId?: string): Promise<string> {
   if (categoryId) {
@@ -36,6 +40,7 @@ export async function processUserInput(message: string, categoryId?: string): Pr
     if (currentCategory) {
       currentQuestion = currentCategory.question;
       currentChoices = currentCategory.choices;
+      conversationState = 'service_selection';
     } else {
       throw new Error(`Category ${categoryName} not found in the data.`);
     }
@@ -43,13 +48,20 @@ export async function processUserInput(message: string, categoryId?: string): Pr
 
   let systemPrompt = `You are a polite and helpful assistant guiding users through a service selection process. 
   The current question is: "${currentQuestion}". 
-  The available choices are: ${JSON.stringify(currentChoices)}. 
-  Guide the user to select from these choices. 
-  If the user has made a final choice, use the save_service_id_and_zip function to save the service ID and ask for their zip code. 
-  After saving the service ID and zip, ask for the user's name, phone, email, and address one by one. 
-  Use the save_user_detail function to save each piece of information as soon as it's provided. 
-  Once all details are collected, use the save_to_database function to save everything. 
+  The available choices are: ${JSON.stringify(currentChoices)}. User can also provide numbers as an input.  
+  The current conversation state is: ${conversationState}.
+  After getting all the information from save_service_id_and_zip, directly go to collecting details and ask user's for there information
+  Guide the user based on the current state:
+  - If in category_selection or service_selection, help them choose from the available options.
+  - If in collecting_details, ask for the user's zip code, name, phone, email, and address in that order.
+  Use the appropriate function to save each piece of information as it's provided.
+  Current user data: ${JSON.stringify(userData)}
   Do not ask for information that has already been provided.`;
+
+  conversationHistory.push({
+    role: "user", content: message,
+    name: undefined
+  });
 
   const functions = [
     {
@@ -66,7 +78,7 @@ export async function processUserInput(message: string, categoryId?: string): Pr
     },
     {
       name: "save_user_detail",
-      description: "Save a user detail",
+      description: "Save a user name, email, phone number and address sequentially",
       parameters: {
         type: "object",
         properties: {
@@ -101,10 +113,10 @@ export async function processUserInput(message: string, categoryId?: string): Pr
   ];
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo-0613",
+    model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: message }
+      ...conversationHistory.map(history => ({ role: history.role as "user" | "assistant", content: history.content, name: history.name }))
     ],
     functions: functions,
     function_call: "auto",
@@ -119,30 +131,42 @@ export async function processUserInput(message: string, categoryId?: string): Pr
     switch (functionName) {
       case "save_service_id_and_zip":
         await saveServiceIdAndZip(functionArgs.serviceId, functionArgs.zip);
+        conversationState = 'collecting_details';
         break;
       case "save_user_detail":
         await saveUserDetail(functionArgs.field as keyof UserData, functionArgs.value);
+        if (functionArgs.field === 'address') {
+          await saveToDatabase(userData);
+          conversationState = 'category_selection';
+        }
         break;
       case "save_to_database":
         await saveToDatabase(functionArgs.userData);
+        conversationState = 'category_selection';
         break;
     }
   }
 
   // Update currentQuestion and currentChoices based on user's choice
-  if (currentChoices && currentChoices[message]) {
+  if (conversationState === 'service_selection' && currentChoices && currentChoices[message]) {
     const choice = currentChoices[message];
     if (typeof choice === 'object') {
       currentQuestion = choice.question;
       currentChoices = choice.choices;
     } else {
       // Final choice reached
+      userData.serviceId = choice;
       currentQuestion = "What's your zip code?";
       currentChoices = null;
+      conversationState = 'collecting_details';
     }
   }
 
-  return assistantMessage.content || "I'm processing your request. How can I help you further?";
+  conversationHistory.push({
+    role: "assistant", content: assistantMessage.content || " ",
+    name: undefined
+  });
+  return assistantMessage.content || "";
 }
 
 async function saveServiceIdAndZip(serviceId: string, zip: string): Promise<string> {
@@ -159,7 +183,6 @@ async function saveUserDetail(field: keyof UserData, value: string): Promise<str
 }
 
 async function saveToDatabase(data: UserData): Promise<string> {
-  // Implement the database saving logic here
   console.log('Saving to database:', data);
   return JSON.stringify(data);
 }

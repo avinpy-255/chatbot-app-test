@@ -1,7 +1,8 @@
 {
     "categories": {
         "Gutter": {
-            "question": "What type of gutters are you intrested in ?",
+            "name": "Gutter", 
+            "question": "What type of gutters are you interested in?",
             "choices": {
                 "K-style": {
                     "question": "What is the nature of the service?",
@@ -24,21 +25,21 @@
                         "Repair": "105"
                     }
                 }
-
             }
         },
         "Bathroom Remodeling": {
-            "question": "Does your bathroom remodel require removing or adding walls ?",
+            "name": "Bathroom Remodeling", 
+            "question": "Does your bathroom remodel require removing or adding walls?",
             "choices": {
                 "yes": {
-                    "question": "Do you want to install new tiles or reface ?",
+                    "question": "Do you want to install new tiles or reface?",
                     "choices": {
                         "Install new tiles": "106",
                         "Refacing": "107"
                     }
                 },
                 "no": {
-                    "question": "Do you want to install new tiles or reface ?",
+                    "question": "Do you want to install new tiles or reface?",
                     "choices": {
                         "Install new tiles": "108",
                         "Refacing": "109"
@@ -47,58 +48,62 @@
             }
         },
         "Home Security": {
-            "question": "What type of security system are you looking for ?",
+            "name": "Home Security", 
+            "question": "What type of security system are you looking for?",
             "choices": {
-              "Smart": {
-                "question": "What is the nature of the installation ?",
-                "choices": {
-                    "Full installation": "110",
-                    "Partial installation": "111"
+                "Smart": {
+                    "question": "What is the nature of the installation?",
+                    "choices": {
+                        "Full installation": "110",
+                        "Partial installation": "111"
+                    }
+                },
+                "Traditional": {
+                    "question": "What is the nature of the installation?",
+                    "choices": {
+                        "Basic Monitoring": "112",
+                        "Basic Installation": "113",
+                        "Basic Repair": "114"
+                    }
                 }
-              },
-              "Traditional": {
-                "question": "What is the nature of the installation ?",
-                "choices": {
-                    "Basic Monitoring": "112",
-                    "Basic Installation": "113",
-                    "Basic Repair": "114"
-                }
-              }
             }
         },
         "Concrete Work": {
-            "question" : "What type of concrete work do you need ?",
+            "name": "Concrete Work", 
+            "question": "What type of concrete work do you need?",
             "choices": {
-               "Patio": {
-                "question": "What is the nature of the service ?",
-                "choices": {
-                    "Resurface": "117",
-                    "Full Replacement": "118"
+                "Patio": {
+                    "question": "What is the nature of the service?",
+                    "choices": {
+                        "Resurface": "117",
+                        "Full Replacement": "118"
+                    }
+                },
+                "Driveway": {
+                    "question": "What is the nature of the service?",
+                    "choices": {
+                        "Resurface": "115",
+                        "Full Replacement": "116"
+                    }
                 }
-               },
-               "Driveway": {
-                "question": "What is the nature of the service ?",
-                "choices": {
-                    "Resurface": "115",
-                    "Full Replacement": "116"
-                }
-               }
             }
         },
         "Landscaping": {
-          "question": "What type of landscaping service do you need ?",
-          "choices": {
-            "Tree Trimming": "119",
-            "Garden Design": "120",
-            "Flowebed Mowing": "121",
-            "Garden Maintaining": "122"
-          }
+            "name": "Landscaping", 
+            "question": "What type of landscaping service do you need?",
+            "choices": {
+                "Tree Trimming": "119",
+                "Garden Design": "120",
+                "Flowerbed Mowing": "121", 
+                "Garden Maintaining": "122"
+            }
         },
         "Electrical Work": {
-            "question": "Do you need electrical wiring upgrads ?",
+            "name": "Electrical Work", 
+            "question": "Do you need electrical wiring upgrades?",
             "choices": {
                 "yes": {
-                    "question": "What type of landscaping service do you need ?",
+                    "question": "What type of electrical service do you need?", 
                     "choices": {
                         "Upgrade to 220v": "123",
                         "Install new fixtures": "124"
@@ -106,10 +111,10 @@
                 },
                 "no": "125"
             }
-
         },
         "Plumbing": {
-            "question": "What type of plumbing service do you need ?",
+            "name": "Plumbing", 
+            "question": "What type of plumbing service do you need?",
             "choices": {
                 "Leak Repair": "126",
                 "Drain Cleaning": "127",
